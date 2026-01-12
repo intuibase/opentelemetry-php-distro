@@ -1,0 +1,21 @@
+--- a/src/xz/file_io.c	2026-01-09 19:14:10.162515698 +0100
++++ b/src/xz/file_io.c	2026-01-09 19:16:00.746645672 +0100
+@@ -9,6 +9,10 @@
+ //
+ ///////////////////////////////////////////////////////////////////////////////
+
++#ifndef TUKLIB_DOSLIKE
++char  *dirname(char *);
++#endif
++
+ #include "private.h"
+
+ #include <fcntl.h>
+@@ -17,7 +21,6 @@
+ #	include <io.h>
+ #else
+ #	include <poll.h>
+-#	include <libgen.h>
+ static bool warn_fchown;
+ #endif
+

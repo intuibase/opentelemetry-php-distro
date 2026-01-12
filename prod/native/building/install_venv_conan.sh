@@ -94,7 +94,7 @@ fi
 if [[ "$_VENV_CREATED" == "true" || "${FORCE_INSTALL}" = true ]]; then
     ${_PIP} --require-virtualenv install -U pip
     # ${_PIP} --require-virtualenv install -U "pyyaml==3.11"
-    ${_PIP} --require-virtualenv install -U conan==2.8.0
+    ${_PIP} --require-virtualenv install -U conan==2.23.0
 fi
 
 echo "${_VENV_PATH}/bin/activate"

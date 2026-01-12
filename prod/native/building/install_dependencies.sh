@@ -107,43 +107,36 @@ else
     fi
 fi
 
-conan remote add -vquiet --index 0 ElasticConan https://artifactory.elastic.dev/artifactory/api/conan/apm-agent-php-dev
-conan remote update --secure --index 1 --url https://center2.conan.io conancenter
+create_conan_package() {
+    local package_name="$1"
+    local package_version="$2"
+    local package_path="$3"
+    local skip_remote_check="$4"
+
+    echo "Searching for ${package_name}/${package_version} in local cache/remotes"
+    if conan list -c ${package_name}/${package_version}:* -fs="build_type=${ARG_BUILD_TYPE}" 2>&1 | grep -q "not found"; then
+        if [[ "${skip_remote_check}" != "true" ]] && conan search -f json ${package_name}/${package_version} 2>&1 | grep -q "Found"; then
+            echo "Package ${package_name} found in remote"
+        else
+            echo "Package ${package_name} not found - creating"
+            conan create --version ${package_version} --build=missing ${ARG_TRACE} ${OPTION_PROFILE} ${OPTION_BUILD_TYPE} --name ${package_name} ${SCRIPT_DIR}/dependencies/${package_path}
+        fi
+    fi
+}
+
+create_conan_package "protobuf-custom" "5.27.0" "protobuf-custom"
+create_conan_package "xz_utils" "5.8.2" "xz_utils-custom"
+create_conan_package "m4" "1.4.19" "m4-custom" true
 
 source ${SCRIPT_DIR}/../../../tools/read_properties.sh
 read_properties ${SCRIPT_DIR}/../../../project.properties PROJECT_PROPERTIES
 PHP_VERSIONS=(${PROJECT_PROPERTIES_SUPPORTED_PHP_VERSIONS//[()]/})
 
 for PHP_VERSION in "${PHP_VERSIONS[@]}"; do
-    CREATE_REFERENCE=php-headers-${PHP_VERSION}
-    echo "Searching for ${CREATE_REFERENCE}/${PROJECT_PROPERTIES_PHP_HEADERS_VERSION} in local cache/remotes"
-
-    if conan list -c ${CREATE_REFERENCE}/${PROJECT_PROPERTIES_PHP_HEADERS_VERSION}:* -fs="build_type=${ARG_BUILD_TYPE}" 2>&1 | grep -q "not found"; then
-        if conan search -f json ${CREATE_REFERENCE}/${PROJECT_PROPERTIES_PHP_HEADERS_VERSION} 2>&1 | grep -q "Found"; then
-            echo "Package php-headers-${PHP_VERSION} found in remote"
-        else
-            echo "Package php-headers-${PHP_VERSION} not found - creating"
-            conan create --build=missing ${ARG_TRACE} ${OPTION_PROFILE} ${OPTION_BUILD_TYPE} --name ${CREATE_REFERENCE} ${SCRIPT_DIR}/dependencies/php-headers
-        fi
-
-    fi
-
+    create_conan_package "php-headers-${PHP_VERSION}" "${PROJECT_PROPERTIES_PHP_HEADERS_VERSION}" "php-headers"
 done
 
-CREATE_REFERENCE=protobuf-custom
-PROTOBUF_VERSION=5.27.0
 
-echo "Searching for ${CREATE_REFERENCE}/${PROTOBUF_VERSION} in local cache/remotes"
-if conan list -c ${CREATE_REFERENCE}/${PROTOBUF_VERSION}:* -fs="build_type=${ARG_BUILD_TYPE}" 2>&1 | grep -q "not found"; then
-    if conan search -f json ${CREATE_REFERENCE}/${PROTOBUF_VERSION} 2>&1 | grep -q "Found"; then
-        echo "Package protobuf-custom found in remote"
-    else
-        echo "Package protobuf-custom not found - creating"
-        conan create --version ${PROTOBUF_VERSION} --build=missing ${ARG_TRACE} ${OPTION_PROFILE} ${OPTION_BUILD_TYPE} --name ${CREATE_REFERENCE} ${SCRIPT_DIR}/dependencies/protobuf-custom
-    fi
-
-fi
-
-# conan will create build/${OPTION_BUILD_TYPE}/generators fordlers inside ${ARG_BUILD_OUTPUT_PATH}
+# conan will create build/${OPTION_BUILD_TYPE}/generators folders inside ${ARG_BUILD_OUTPUT_PATH}
 
 conan install ${ARG_TRACE} --build=missing ${OPTION_PROFILE} ${OPTION_BUILD_TYPE} -of ${ARG_BUILD_OUTPUT_PATH} ${SCRIPT_DIR}/../conanfile.txt

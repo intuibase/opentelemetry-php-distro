@@ -85,17 +85,26 @@ private:
     ConfigurationSnapshot current_;
     std::shared_ptr<LoggerInterface> logger_;
 
-#define BUILD_OTEL_PHP_OPTION_METADATA(optname, type, secret)              \
-    {                                                                     \
-        STRINGIFY_HELPER(optname), {                                          \
-            type, offsetof(ConfigurationSnapshot, optname), secret, false \
-        }                                                                 \
+    // Custom offset calculation for non-standard-layout types
+    template <typename T, typename M>
+    static constexpr size_t memberOffset(M T::*member) {
+        constexpr T object{};
+        return reinterpret_cast<size_t>(&(object.*member)) - reinterpret_cast<size_t>(&object);
     }
-#define BUILD_OPTION_METADATA(optname, type, secret)                     \
-    {                                                                    \
-        STRINGIFY_HELPER(optname), {                                         \
-            type, offsetof(ConfigurationSnapshot, optname), secret, true \
-        }                                                                \
+
+#define MEMBER_OFFSET(type, member) (reinterpret_cast<size_t>(&((type *)nullptr)->member))
+
+#define BUILD_OTEL_PHP_OPTION_METADATA(optname, type, secret)                  \
+    {                                                                          \
+        STRINGIFY_HELPER(optname), {                                           \
+            type, MEMBER_OFFSET(ConfigurationSnapshot, optname), secret, false \
+        }                                                                      \
+    }
+#define BUILD_OPTION_METADATA(optname, type, secret)                          \
+    {                                                                         \
+        STRINGIFY_HELPER(optname), {                                          \
+            type, MEMBER_OFFSET(ConfigurationSnapshot, optname), secret, true \
+        }                                                                     \
     }
 
     // clang-format off
