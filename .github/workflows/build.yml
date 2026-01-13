@@ -23,7 +23,13 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  build-compiler:
+    uses: ./.github/workflows/native-dev-tools-build.yml
+    with:
+      build_arch: all
   build-native:
+    needs:
+      - build-compiler
     uses: ./.github/workflows/build-native.yml
     with:
       build_arch: all
