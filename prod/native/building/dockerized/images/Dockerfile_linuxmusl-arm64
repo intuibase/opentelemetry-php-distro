@@ -1,15 +1,15 @@
-FROM arm64v8/alpine:3.20 as devtools_alpine
+ARG ALPINE_VERSION=3.20
+FROM arm64v8/alpine:${ALPINE_VERSION} as devtools_alpine
 
 ARG USER_NAME=build
-
-RUN uname -a
 
 #binutils: bison - gprofng, texinfo - makeinfo
 
 RUN apk update \
-    && apk add sudo curl wget git make autoconf bzip2 \
+    && apk add sudo curl wget git make autoconf bzip2 tzdata \
     texinfo bison \
-    binutils gcc g++ zlib-dev gettext-dev linux-headers
+    binutils gcc g++ zlib-dev gettext-dev linux-headers \
+    file flex gawk libtool perl coreutils curl-dev libidn2 libssl3 libcrypto3
 
 RUN adduser --disabled-password --gecos '' ${USER_NAME} \
     && echo "${USER_NAME} ALL=(ALL) NOPASSWD:ALL" >>/etc/sudoers
@@ -58,21 +58,19 @@ RUN curl -LO https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION
  && tar -xf cmake-${CMAKE_VERSION}.tar.gz \
  && rm cmake-${CMAKE_VERSION}.tar.gz
 
-RUN sudo apk add curl-dev
-
 RUN cd cmake-${CMAKE_VERSION} \
  && ./bootstrap --prefix=/opt/cmake-${CMAKE_VERSION} --parallel="${nproc:-2}"\
  && make -j$(nproc)\
  && sudo make install
 
-FROM arm64v8/alpine:3.10
+FROM arm64v8/alpine:${ALPINE_VERSION}
 
 COPY --from=devtools_alpine /opt /opt
 
 ARG USER_NAME=build
 
 RUN apk add --no-cache sudo curl wget git make autoconf bzip2 \
-    libstdc++ libintl icu musl-dev curl-dev linux-headers \
+    libstdc++ libintl icu musl-dev curl-dev libidn2 libssl3 libcrypto3 linux-headers \
     python3 py3-pip py3-virtualenv bash
 
 RUN adduser --disabled-password --gecos '' ${USER_NAME} \
