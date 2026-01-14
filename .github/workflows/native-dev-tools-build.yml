@@ -74,6 +74,9 @@ jobs:
           echo "gcc_image=${COMPILER_IMAGE}" >> $GITHUB_OUTPUT
           echo "conan_cache_image=${CONANCACHE_IMAGE}" >> $GITHUB_OUTPUT
 
+          echo "Compiler image: ${COMPILER_IMAGE}"
+          echo "Conan cache image: ${CONANCACHE_IMAGE}"
+
       - name: Check if GCC base image exists
         id: check-gcc
         run: |
@@ -115,17 +118,16 @@ jobs:
       - name: Check if Conan cache image exists
         id: check-conan
         run: |
-          IMAGE_NAME="${{ steps.images.outputs.conancache_image }}"
-          echo "Checking for image: ${IMAGE_NAME}"
+            IMAGE_NAME="${{ steps.images.outputs.conan_cache_image }}"
+            echo "Checking for image: ${IMAGE_NAME}"
 
-          if docker manifest inspect ${IMAGE_NAME} > /dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "✓ Conan cache image already exists on Docker Hub"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "✗ Conan cache image does not exist, will build"
-          fi
-
+            if docker manifest inspect ${IMAGE_NAME} > /dev/null 2>&1; then
+              echo "exists=true" >> $GITHUB_OUTPUT
+              echo "✓ Conan cache image already exists on Docker Hub"
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+              echo "✗ Conan cache image does not exist, will build"
+            fi
       - name: Build Conan cache image
         if: steps.check-conan.outputs.exists == 'false'
         working-directory: prod/native/building/dockerized
