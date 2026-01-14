@@ -52,6 +52,9 @@ jobs:
             image=moby/buildkit:latest
             network=host
 
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v1
+
       - name: Extract image names from docker-compose.yml
         id: images
         working-directory: prod/native/building/dockerized
@@ -60,8 +63,9 @@ jobs:
 
           docker compose config --help
 
-          COMPILER_IMAGE=$(docker compose config | grep "image:" | awk '{print $2}' | grep ${{ matrix.arch }} | grep -v conancache)
-          CONANCACHE_IMAGE=$(docker compose config | grep "image:" | awk '{print $2}' | grep conancache | grep ${{ matrix.arch }})
+
+          COMPILER_IMAGE=$(docker compose config --images | grep ${{ matrix.arch }} | grep -v conancache)
+          CONANCACHE_IMAGE=$(docker compose config --images | grep conancache | grep ${{ matrix.arch }})
 
           echo "gcc_image=${COMPILER_IMAGE}" >> $GITHUB_OUTPUT
           echo "conan_cache_image=${CONANCACHE_IMAGE}" >> $GITHUB_OUTPUT
