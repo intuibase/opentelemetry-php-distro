@@ -91,6 +91,8 @@ jobs:
       - name: Build GCC base image
         if: steps.check-gcc.outputs.exists == 'false'
         working-directory: prod/native/building/dockerized
+        env:
+          BUILDX_BAKE_ENTITLEMENTS_FS: 0
         run: |
           echo "Building GCC base image for ${{ matrix.arch }}"
 
@@ -127,6 +129,8 @@ jobs:
       - name: Build Conan cache image
         if: steps.check-conan.outputs.exists == 'false'
         working-directory: prod/native/building/dockerized
+        env:
+          BUILDX_BAKE_ENTITLEMENTS_FS: 0
         run: |
           echo "Building Conan cache image for ${{ matrix.arch }}"
 
