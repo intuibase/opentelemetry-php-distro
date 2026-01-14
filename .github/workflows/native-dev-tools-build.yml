@@ -32,7 +32,7 @@ jobs:
       build_arch: ${{ inputs.build_arch }}
 
   build-compiler-image:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.goarch == 'arm64' && 'oracle-4cpu-16gb-arm64' || 'ubuntu-latest' }}
     needs: setup-build-matrix
     env:
       DOCKER_BUILDKIT: 1
@@ -42,12 +42,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
-      - name: Set up QEMU for multi-platform builds
-        if: contains(matrix.arch, 'arm64')
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/arm64
 
       - name: Set up Docker Buildx
         if: contains(matrix.arch, 'arm64')
