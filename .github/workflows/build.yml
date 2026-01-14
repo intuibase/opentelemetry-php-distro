@@ -25,6 +25,7 @@ concurrency:
 jobs:
   build-compiler:
     uses: ./.github/workflows/native-dev-tools-build.yml
+    secrets: inherit
     with:
       build_arch: all
   build-native:
