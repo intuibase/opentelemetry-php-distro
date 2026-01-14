@@ -57,8 +57,11 @@ jobs:
         working-directory: prod/native/building/dockerized
         run: |
           echo "::group::Extracting image names for architecture: ${{ matrix.arch }}"
-          COMPILER_IMAGE=$(docker compose config --images | grep ${{ matrix.arch }} | grep -v conancache)
-          CONANCACHE_IMAGE=$(docker compose config --images | grep conancache | grep ${{ matrix.arch }})
+
+          docker compose config --help
+
+          COMPILER_IMAGE=$(docker compose config | grep "image:" | awk '{print $2}' | grep ${{ matrix.arch }} | grep -v conancache)
+          CONANCACHE_IMAGE=$(docker compose config | grep "image:" | awk '{print $2}' | grep conancache | grep ${{ matrix.arch }})
 
           echo "gcc_image=${COMPILER_IMAGE}" >> $GITHUB_OUTPUT
           echo "conan_cache_image=${CONANCACHE_IMAGE}" >> $GITHUB_OUTPUT
