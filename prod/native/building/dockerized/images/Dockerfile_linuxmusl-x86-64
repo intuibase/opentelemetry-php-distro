@@ -1,4 +1,4 @@
-FROM alpine:3.10 as devtools_alpine
+FROM alpine:3.20 as devtools_alpine
 
 ARG USER_NAME=build
 
