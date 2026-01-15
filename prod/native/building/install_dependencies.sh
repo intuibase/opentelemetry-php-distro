@@ -125,8 +125,15 @@ create_conan_package() {
 }
 
 create_conan_package "protobuf-custom" "5.27.0" "protobuf-custom"
+
+# Following lines installs packages that are required solely as build dependencies
+# for other packages needed by the distribution. These packages are not directly
+# required by the distro itself, but are necessary to compile and build other
+# required components.
+
 create_conan_package "xz_utils" "5.8.2" "xz_utils-custom"
 create_conan_package "m4" "1.4.19" "m4-custom" true
+create_conan_package "cmake" "3.31.10" "cmake3-custom" true
 
 source ${SCRIPT_DIR}/../../../tools/read_properties.sh
 read_properties ${SCRIPT_DIR}/../../../project.properties PROJECT_PROPERTIES
