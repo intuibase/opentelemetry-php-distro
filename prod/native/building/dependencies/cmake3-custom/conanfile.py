@@ -28,8 +28,8 @@ class CMakeConan(ConanFile):
         "bootstrap": [True, False],
     }
     default_options = {
-        "with_openssl": True,
-        "bootstrap": False,
+        "with_openssl": False,
+        "bootstrap": True,
     }
 
     def config_options(self):
@@ -155,7 +155,6 @@ class CMakeConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "doc"))
 
     def package_id(self):
-        del self.info.settings.compiler
         del self.info.options.bootstrap
 
     def package_info(self):
