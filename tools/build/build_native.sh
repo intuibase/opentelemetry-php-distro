@@ -70,6 +70,8 @@ if [[ -n "${CONAN_CACHE_PATH}" ]]; then
     mkdir -p "${CONAN_CACHE_PATH}"
     # https://docs.conan.io/2/reference/environment.html#conan-home
     CONAN_HOME_MP=(-e "CONAN_HOME=/conan_home" -v "${CONAN_CACHE_PATH}:/conan_home")
+else
+    CONAN_HOME_MP=(-e "CONAN_HOME=/home/build/.conan2")
 fi
 
 echo "BUILD_ARCHITECTURE: $BUILD_ARCHITECTURE"
