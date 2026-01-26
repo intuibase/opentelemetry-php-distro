@@ -1,0 +1,28 @@
+ARG BASEIMAGE
+FROM ${BASEIMAGE} AS conan_cache_builder
+
+ARG USER_NAME=build
+
+USER ${USER_NAME}
+COPY --chown=${USER_NAME} --from=rootdir prod/native/CMakeLists.txt /source/prod/native/CMakeLists.txt
+COPY --chown=${USER_NAME} --from=rootdir prod/native/CMakePresets.json /source/prod/native/CMakePresets.json
+COPY --chown=${USER_NAME} --from=rootdir prod/native/conanfile.txt /source/prod/native/conanfile.txt
+COPY --chown=${USER_NAME} --from=rootdir prod/native/building/ /source/prod/native/building/
+COPY --chown=${USER_NAME} --from=rootdir tools/ /source/tools/
+COPY --chown=${USER_NAME} --from=rootdir project.properties /source/project.properties
+
+ENV BUILDING_CONAN_DEPENDENCIES_ONLY=1
+
+WORKDIR /source/prod/native
+
+ARG BUILD_ARCHITECTURE
+
+RUN cmake --preset ${BUILD_ARCHITECTURE}-release
+
+FROM ${BASEIMAGE}
+
+ARG USER_NAME=build
+
+USER ${USER_NAME}
+
+COPY --chown=${USER_NAME} --from=conan_cache_builder /home/build/.conan2 /home/build/.conan2

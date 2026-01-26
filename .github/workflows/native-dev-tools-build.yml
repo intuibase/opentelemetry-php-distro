@@ -1,0 +1,152 @@
+---
+name: native-dev-tools-build
+
+
+on:
+  workflow_call:
+    inputs:
+      build_arch:
+        required: false
+        type: string
+        default: 'x86_64'
+  workflow_dispatch:
+    inputs:
+      build_arch:
+        type: choice
+        description: Build architecture
+        default: 'x86_64'
+        options:
+          - all
+          - x86_64
+          - arm64
+  push:
+    paths:
+      - 'prod/native/building/dockerized/**'
+    branches:
+        - main
+
+jobs:
+  setup-build-matrix:
+    uses: ./.github/workflows/build-arch-matrix-generator.yml
+    with:
+      build_arch: ${{ inputs.build_arch }}
+
+  build-compiler-image:
+    runs-on: ${{ matrix.goarch == 'arm64' && 'oracle-4cpu-16gb-arm64' || 'ubuntu-latest' }}
+    needs: setup-build-matrix
+    env:
+      DOCKER_BUILDKIT: 1
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup-build-matrix.outputs.matrix-combinations) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        if: contains(matrix.arch, 'arm64')
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v1
+
+      - name: Log into Docker.io
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN_PHP_DISTRO }}
+
+      - name: Extract image names from docker-compose.yml
+        id: images
+        working-directory: prod/native/building/dockerized
+        run: |
+          echo "::group::Extracting image names for architecture: ${{ matrix.arch }}"
+
+          COMPILER_IMAGE=$(docker compose config --images | grep ${{ matrix.arch }} | grep -v conancache)
+          CONANCACHE_IMAGE=$(docker compose config --images | grep conancache | grep ${{ matrix.arch }})
+
+          echo "gcc_image=${COMPILER_IMAGE}" >> $GITHUB_OUTPUT
+          echo "conan_cache_image=${CONANCACHE_IMAGE}" >> $GITHUB_OUTPUT
+
+          echo "Compiler image: ${COMPILER_IMAGE}"
+          echo "Conan cache image: ${CONANCACHE_IMAGE}"
+
+      - name: Check if GCC base image exists
+        id: check-gcc
+        run: |
+          IMAGE_NAME="${{ steps.images.outputs.gcc_image }}"
+          echo "Checking for image: ${IMAGE_NAME}"
+
+          if docker manifest inspect ${IMAGE_NAME} > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Image already exists on Docker Hub"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✗ Image does not exist, will build"
+          fi
+
+      - name: Build GCC base image
+        if: steps.check-gcc.outputs.exists == 'false'
+        working-directory: prod/native/building/dockerized
+        env:
+          BUILDX_BAKE_ENTITLEMENTS_FS: 0
+        run: |
+          echo "Building GCC base image for ${{ matrix.arch }}"
+
+          # For fork PRs on ARM64, use --load to make image available locally
+          # For same-repo or push to main, build normally (will be pushed later)
+          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]] && [[ "${{ matrix.arch }}" == *"arm64"* ]]; then
+            echo "Fork PR on ARM64: building with --load to make image available locally"
+            docker buildx bake --load build_${{ matrix.arch }}
+          else
+            docker compose build build_${{ matrix.arch }}
+          fi
+
+      - name: Push GCC base image to Docker Hub
+        if: steps.check-gcc.outputs.exists == 'false' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        working-directory: prod/native/building/dockerized
+        run: |
+          echo "Pushing GCC base image for ${{ matrix.arch }}"
+          docker compose push build_${{ matrix.arch }}
+
+      - name: Check if Conan cache image exists
+        id: check-conan
+        run: |
+            IMAGE_NAME="${{ steps.images.outputs.conan_cache_image }}"
+            echo "Checking for image: ${IMAGE_NAME}"
+
+            if docker manifest inspect ${IMAGE_NAME} > /dev/null 2>&1; then
+              echo "exists=true" >> $GITHUB_OUTPUT
+              echo "✓ Conan cache image already exists on Docker Hub"
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+              echo "✗ Conan cache image does not exist, will build"
+            fi
+      - name: Build Conan cache image
+        if: steps.check-conan.outputs.exists == 'false'
+        working-directory: prod/native/building/dockerized
+        env:
+          BUILDX_BAKE_ENTITLEMENTS_FS: 0
+        run: |
+          echo "Building Conan cache image for ${{ matrix.arch }}"
+
+          # For fork PRs on ARM64, use --load to ensure image is available locally
+          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]] && [[ "${{ matrix.arch }}" == *"arm64"* ]]; then
+            echo "Fork PR on ARM64: building with --load"
+            docker buildx bake --load build_${{ matrix.arch }}_conan
+          else
+            docker compose build build_${{ matrix.arch }}_conan
+          fi
+
+      - name: Push Conan cache image
+        if: steps.check-conan.outputs.exists == 'false' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        working-directory: prod/native/building/dockerized
+        run: |
+          echo "Pushing Conan cache image for ${{ matrix.arch }}"
+          docker compose push build_${{ matrix.arch }}_conan

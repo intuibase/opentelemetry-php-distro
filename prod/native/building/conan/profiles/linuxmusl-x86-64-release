@@ -2,7 +2,7 @@
 os=Linux
 arch=x86_64
 compiler=gcc
-compiler.version=14
+compiler.version=15
 compiler.cppstd=20
 compiler.libcxx=libstdc++11
 compiler.libc=musl
@@ -10,11 +10,12 @@ build_type=Release
 
 [conf]
 tools.cmake.cmaketoolchain:generator=Unix Makefiles
-tools.build:compiler_executables={"c":"/opt/gcc-14.2.0/bin/gcc","cpp":"/opt/gcc-14.2.0/bin/g++"}
+tools.cmake:cmake_program=/opt/php-distro-build-cmake/bin/cmake
+tools.build:compiler_executables={"c":"/opt/php-distro-build-gcc/bin/gcc","cpp":"/opt/php-distro-build-gcc/bin/g++"}
 
 [buildenv]
-CC=/opt/gcc-14.2.0/bin/gcc
-CXX=/opt/gcc-14.2.0/bin/g++
+CC=/opt/php-distro-build-gcc/bin/gcc
+CXX=/opt/php-distro-build-gcc/bin/g++
 LDFLAGS+=-static-libgcc
 LDFLAGS+=-static-libstdc++
-CC_FOR_BUILD=/opt/gcc-14.2.0/bin/gcc
+CC_FOR_BUILD=/opt/php-distro-build-gcc/bin/gcc

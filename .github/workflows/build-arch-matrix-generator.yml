@@ -38,6 +38,9 @@ jobs:
             echo "${SELECTED_ARCH} selected. Adding arm64"
             MATRIX+='{"arch": "linux-arm64", "goarch": "arm64", "packages": "deb rpm"},{"arch": "linuxmusl-arm64", "goarch": "arm64", "packages": "apk"},'
           fi
-          echo "matrix-combinations={\"include\":[$MATRIX]}"
 
+          # Remove trailing comma
+          MATRIX="${MATRIX%,}"
+
+          echo "matrix-combinations={\"include\":[$MATRIX]}"
           echo "matrix-combinations={\"include\":[$MATRIX]}" >> $GITHUB_OUTPUT
