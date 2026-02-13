@@ -59,12 +59,13 @@ AgentGlobals::AgentGlobals(std::shared_ptr<LoggerInterface> logger,
     opAmp_(std::make_shared<opentelemetry::php::transport::OpAmp>(logger_, config_, httpTransportAsync_, resourceDetector_)),
     sharedMemory_(std::make_shared<opentelemetry::php::SharedMemoryState>()),
     requestScope_(std::make_shared<opentelemetry::php::RequestScope>(logger_, bridge_, sapi_, sharedMemory_, dependencyAutoLoaderGuard_, inferredSpans_, config_, [hs = hooksStorage_]() { hs->clear(); }, [this]() { return getPeriodicTaskExecutor();}, [this]() { return coordinatorConfigProvider_->triggerUpdateIfChanged(); })),
-    messagesDispatcher_(std::make_shared<opentelemetry::php::coordinator::CoordinatorMessagesDispatcher>(logger_, httpTransportAsync_)),
+    workerRegistry_(std::make_shared<opentelemetry::php::coordinator::WorkerRegistry>(logger_)),
+    messagesDispatcher_(std::make_shared<opentelemetry::php::coordinator::CoordinatorMessagesDispatcher>(logger_, httpTransportAsync_, workerRegistry_)),
     coordinatorConfigProvider_(std::make_shared<opentelemetry::php::coordinator::CoordinatorConfigurationProvider>(logger_, opAmp_)),
-    coordinatorProcess_(std::make_shared<opentelemetry::php::coordinator::CoordinatorProcess>(logger_, messagesDispatcher_, coordinatorConfigProvider_))
+    coordinatorProcess_(std::make_shared<opentelemetry::php::coordinator::CoordinatorProcess>(logger_, messagesDispatcher_, coordinatorConfigProvider_, workerRegistry_))
     {
-        forkableRegistry_->registerForkable(httpTransportAsync_);
-        forkableRegistry_->registerForkable(opAmp_);
+        // forkableRegistry_->registerForkable(httpTransportAsync_);
+        // forkableRegistry_->registerForkable(opAmp_);
 
         configManager_->attachLogger(logger_);
 

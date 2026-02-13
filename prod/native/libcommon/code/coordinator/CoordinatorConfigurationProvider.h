@@ -4,7 +4,6 @@
 #include "transport/OpAmp.h"
 
 #include <memory>
-#include <span>
 #include <string>
 #include <utility>
 

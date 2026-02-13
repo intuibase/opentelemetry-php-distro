@@ -13,7 +13,7 @@ void CoordinatorProcess::coordinatorLoop() {
         unsigned int priority = 0;
 
         try {
-            if (commandQueue_->timed_receive(buffer, maxMqPayloadSize, receivedSize, priority, std::chrono::steady_clock::now() + std::chrono::milliseconds(10))) {
+            if (commandQueue_->timed_receive(buffer, maxMqPayloadSize, receivedSize, priority, std::chrono::steady_clock::now() + std::chrono::milliseconds(100))) {
                 processor_.processReceivedChunk(reinterpret_cast<const CoordinatorPayload *>(buffer), receivedSize);
             }
         } catch (std::exception &ex) {
@@ -28,9 +28,15 @@ void CoordinatorProcess::setupPeriodicTasks() {
     periodicTaskExecutor_ = std::make_unique<PeriodicTaskExecutor>(std::vector<PeriodicTaskExecutor::task_t>{[this](PeriodicTaskExecutor::time_point_t now) {
         // Check parent process is alive
         if (getppid() != parentProcessId_) {
-            ELOG_DEBUG(logger_, COORDINATOR, "CoordinatorProcess: parent process has exited, shutting down coordinator process");
-            working_ = false;
+            ELOG_DEBUG(logger_, COORDINATOR, "CoordinatorProcess: parent process has exited. Checking if workers are still alive.");
+            workerRegistry_->verifyWorkersAlive();
+            if (workerRegistry_->getWorkerCount() > 0) {
+                ELOG_DEBUG(logger_, COORDINATOR, "CoordinatorProcess: there are still {} alive workers, continuing work", workerRegistry_->getWorkerCount());
+            } else {
+                working_ = false;
+            }
         }
+
 
         static auto lastCleanupTime = std::chrono::steady_clock::now();
         if (now - lastCleanupTime >= cleanUpLostMessagesInterval) {

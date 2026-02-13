@@ -1,4 +1,5 @@
 #include "CoordinatorMessagesDispatcher.h"
+#include "LoggerInterface.h"
 #include "coordinator/proto/CoordinatorCommands.pb.h"
 
 namespace opentelemetry::php::coordinator {
@@ -60,6 +61,17 @@ void CoordinatorMessagesDispatcher::processRecievedMessage(const std::span<const
             httpTransport_->enqueue(p.endpoint_hash(), buf);
             break;
         }
+        case coordinator::CoordinatorCommand::WORKER_STARTED: {
+            ELOG_DEBUG(logger_, COORDINATOR, "CoordinatorMessagesDispatcher: Worker started");
+            workerRegistry_->registerWorker(command.worker_started().process_id(), command.worker_started().parent_process_id());
+            break;
+        }
+        case coordinator::CoordinatorCommand::WORKER_IS_GOING_TO_SHUTDOWN: {
+            ELOG_DEBUG(logger_, COORDINATOR, "CoordinatorMessagesDispatcher: Worker pid: {} ppid: {} is going to shutdown", command.worker_is_going_to_shutdown().process_id(), command.worker_is_going_to_shutdown().parent_process_id());
+            workerRegistry_->unregisterWorker(command.worker_is_going_to_shutdown().process_id());
+            break;
+        }
+
         default:
             ELOG_WARNING(logger_, COORDINATOR, "CoordinatorMessagesDispatcher: Unknown CoordinatorCommand type={}", static_cast<int>(command.type()));
             break;

@@ -54,6 +54,9 @@ std::string_view PhpBridge::getPhpSapiName() const {
 }
 
 void PhpBridge::compileAndExecuteFile(std::string_view fileName) const {
+    if (fileName.empty()) {
+        throw std::invalid_argument("File name provided for compilation and execution cannot be empty");
+    }
 
 #if PHP_VERSION_ID < 80100
     AutoZval fn{fileName};
