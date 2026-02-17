@@ -12,11 +12,12 @@
 
 #include <atomic>
 #include <chrono>
-#include <functional>
 #include <memory>
 #include <string>
 
 #include "CoordinatorConfigurationProvider.h"
+#include "coordinator/WorkerRegistrar.h"
+#include "coordinator/WorkerRegistry.h"
 
 namespace opentelemetry::php::coordinator {
 
@@ -29,17 +30,19 @@ constexpr static std::chrono::minutes cleanUpLostMessagesInterval(1);
 class CoordinatorProcess : public boost::noncopyable, public ForkableInterface {
 
 public:
-    CoordinatorProcess(std::shared_ptr<LoggerInterface> logger, std::shared_ptr<CoordinatorMessagesDispatcher> messagesDispatcher, std::shared_ptr<CoordinatorConfigurationProvider> configProvider) : logger_(std::move(logger)), messagesDispatcher_(std::move(messagesDispatcher)), configProvider_(std::move(configProvider)) {
+    CoordinatorProcess(std::shared_ptr<LoggerInterface> logger, std::shared_ptr<CoordinatorMessagesDispatcher> messagesDispatcher, std::shared_ptr<CoordinatorConfigurationProvider> configProvider, std::shared_ptr<WorkerRegistry> workerRegistry) : logger_(std::move(logger)), messagesDispatcher_(std::move(messagesDispatcher)), configProvider_(std::move(configProvider)), workerRegistry_(std::move(workerRegistry)) {
     }
     ~CoordinatorProcess() {
     }
 
     void prefork() final {
         periodicTaskExecutor_->prefork();
+        workerRegistrar_->prefork();
     }
 
     void postfork([[maybe_unused]] bool child) final {
         periodicTaskExecutor_->postfork(child);
+        workerRegistrar_->postfork(child);
     }
 
     // returns true in scope of forked CoordinatorProcess
@@ -83,6 +86,8 @@ private:
     CoordinatorTelemetrySignalsSender coordinatorSender_{logger_, [this](const std::string &payload) { return processor_.sendPayload(payload); }};
     std::shared_ptr<CoordinatorMessagesDispatcher> messagesDispatcher_;
     std::shared_ptr<CoordinatorConfigurationProvider> configProvider_;
+    std::unique_ptr<WorkerRegistrar> workerRegistrar_{std::make_unique<WorkerRegistrar>(logger_, [this](const std::string &payload) { return processor_.sendPayload(payload); })};
+    std::shared_ptr<WorkerRegistry> workerRegistry_;
 
     int processId_ = 0;
     int parentProcessId_ = 0;

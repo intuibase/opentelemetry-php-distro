@@ -2,6 +2,7 @@
 
 #include "PhpSapi.h"
 #include "Logger.h"
+#include "coordinator/WorkerRegistry.h"
 #include <functional>
 #include <memory>
 
@@ -39,6 +40,7 @@ namespace coordinator {
 class CoordinatorMessagesDispatcher;
 class CoordinatorProcess;
 class CoordinatorConfigurationProvider;
+class WorkerRegistry;
 } // namespace coordinator
 namespace transport {
 class CurlSender;
@@ -83,6 +85,7 @@ public:
     std::shared_ptr<opentelemetry::php::transport::OpAmp> opAmp_;
     std::shared_ptr<SharedMemoryState> sharedMemory_;
     std::shared_ptr<RequestScope> requestScope_;
+    std::shared_ptr<coordinator::WorkerRegistry> workerRegistry_;
     std::shared_ptr<coordinator::CoordinatorMessagesDispatcher> messagesDispatcher_;
     std::shared_ptr<coordinator::CoordinatorConfigurationProvider> coordinatorConfigProvider_;
     std::shared_ptr<coordinator::CoordinatorProcess> coordinatorProcess_;
