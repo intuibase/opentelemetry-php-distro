@@ -44,8 +44,8 @@
     "autoload-dev": {
         "psr-4": {
             "OpenTelemetry\\Distro\\": "./prod/php/OpenTelemetry/Distro/",
-            "ElasticOTelTests\\": "./tests/ElasticOTelTests/",
-            "ElasticOTelTools\\Build\\": "./tools/build/"
+            "OpenTelemetry\\DistroTests\\": "./tests/OpenTelemetry/DistroTests/",
+            "OpenTelemetry\\DistroTools\\Build\\": "./tools/build/"
         }
     },
     "config": {
