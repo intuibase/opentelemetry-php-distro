@@ -1,9 +1,0 @@
-<?php
-
-declare(strict_types=1);
-
-require __DIR__ . '/../../../../bootstrap.php';
-
-use OpenTelemetry\DistroTests\ComponentTests\Util\MockOTelCollector;
-
-MockOTelCollector::run();

@@ -4,7 +4,7 @@
 
 declare(strict_types=1);
 
-namespace OpenTelemetry\DistroTests\substitutes;
+namespace OTelDistroTests\substitutes;
 
 use PHPUnit\Framework\AssertionFailedError;
 

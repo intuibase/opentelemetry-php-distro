@@ -53,7 +53,7 @@
     "autoload-dev": {
         "psr-4": {
             "OpenTelemetry\\Distro\\": "./prod/php/OpenTelemetry/Distro/",
-            "OpenTelemetry\\DistroTests\\": "./tests/OpenTelemetry/DistroTests/",
+            "OTelDistroTests\\": "./tests/OTelDistroTests/",
             "OpenTelemetry\\DistroTools\\Build\\": "./tools/build/"
         }
     },

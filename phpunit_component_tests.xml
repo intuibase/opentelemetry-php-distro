@@ -10,7 +10,7 @@
          beStrictAboutOutputDuringTests="true"
          beStrictAboutTestsThatDoNotTestAnything="true"
 
-         bootstrap="./tests/OpenTelemetry/DistroTests/ComponentTests/bootstrapComponentTests.php"
+         bootstrap="./tests/OTelDistroTests/ComponentTests/bootstrapComponentTests.php"
 
          cacheDirectory="./z_local/GENERATED/PHPUnit/cache"
          cacheResult="false"
@@ -55,12 +55,12 @@
 >
     <testsuites>
         <testsuite name="Tests">
-            <directory>./tests/OpenTelemetry/DistroTests/ComponentTests</directory>
+            <directory>./tests/OTelDistroTests/ComponentTests</directory>
         </testsuite>
     </testsuites>
 
     <extensions>
-        <bootstrap class="OpenTelemetry\DistroTests\ComponentTests\Util\ComponentTestsPHPUnitExtension"/>
+        <bootstrap class="OTelDistroTests\ComponentTests\Util\ComponentTestsPHPUnitExtension"/>
     </extensions>
 
     <logging>

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use OpenTelemetry\DistroTests\substitutes\PHPUnitFrameworkAssertionFailedErrorAutoloader;
-use OpenTelemetry\DistroTests\substitutes\SubstitutesUtil;
+use OTelDistroTests\substitutes\PHPUnitFrameworkAssertionFailedErrorAutoloader;
+use OTelDistroTests\substitutes\SubstitutesUtil;
 use PHPUnit\Framework\AssertionFailedError;
 
 require __DIR__ . '/PHPUnitFrameworkAssertionFailedErrorAutoloader.php';

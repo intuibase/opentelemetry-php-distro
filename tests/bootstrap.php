@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use OpenTelemetry\DistroTests\Util\RepoRootDir;
-use OpenTelemetry\DistroTests\Util\ExceptionUtil;
+use OTelDistroTests\Util\RepoRootDir;
+use OTelDistroTests\Util\ExceptionUtil;
 
 // Ensure that composer has installed all dependencies
 if (!file_exists($vendorAutoload = (__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php'))) {
@@ -25,7 +25,7 @@ ExceptionUtil::runCatchLogRethrow(
         require __DIR__ . '/polyfills/load.php';
         require __DIR__ . '/otel_distro_extension_stubs/load.php';
         require __DIR__ . '/dummyFuncForTestsWithoutNamespace.php';
-        require __DIR__ . '/OpenTelemetry/DistroTests/dummyFuncForTestsWithNamespace.php';
+        require __DIR__ . '/OTelDistroTests/dummyFuncForTestsWithNamespace.php';
     }
 );
 
