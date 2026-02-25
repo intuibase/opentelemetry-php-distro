@@ -180,7 +180,7 @@ function main() {
     dockerfile=$(select_Dockerfile_based_on_package_type "${OTEL_PHP_TESTS_PACKAGE_TYPE:?}")
     echo "Selected Dockerfile: ${dockerfile}"
 
-    local docker_image_tag="elastic-otel-php-tests-component-${OTEL_PHP_TESTS_PACKAGE_TYPE:?}-${OTEL_PHP_TESTS_PHP_VERSION:?}"
+    local docker_image_tag="otel-php-distro-tests-component-${OTEL_PHP_TESTS_PACKAGE_TYPE:?}-${OTEL_PHP_TESTS_PHP_VERSION:?}"
 
     end_github_workflow_log_group "${current_github_workflow_log_group_name}"
 
