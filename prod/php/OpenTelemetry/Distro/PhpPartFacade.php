@@ -120,12 +120,6 @@ final class PhpPartFacade
              * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
              */
             if (\OpenTelemetry\Distro\get_config_option_by_name('inferred_spans_enabled')) {
-                self::logDebug(__LINE__, __FUNCTION__, 'Inferred spans is enabled, creating InferredSpans instance with config options', [
-                    'inferred_spans_reduction_enabled' => \OpenTelemetry\Distro\get_config_option_by_name('inferred_spans_reduction_enabled'),
-                    'inferred_spans_stacktrace_enabled' => \OpenTelemetry\Distro\get_config_option_by_name('inferred_spans_stacktrace_enabled'),
-                    'inferred_spans_min_duration' => \OpenTelemetry\Distro\get_config_option_by_name('inferred_spans_min_duration'),
-                ]);
-
                 /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
                 self::$singletonInstance->inferredSpans = new InferredSpans(
                     (bool)\OpenTelemetry\Distro\get_config_option_by_name('inferred_spans_reduction_enabled'),
