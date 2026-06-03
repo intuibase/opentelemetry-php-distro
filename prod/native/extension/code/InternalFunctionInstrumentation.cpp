@@ -79,13 +79,13 @@ static void callWithSpanHandlerPre(zend_execute_data *execute_data, WithSpanMeta
                     zval resolved;
                     ZVAL_UNDEF(&resolved);
                     if (zend_get_attribute_value(&resolved, wsAttr, i, execute_data->func->common.scope) == SUCCESS && Z_TYPE(resolved) == IS_ARRAY) {
-                        zend_string *key = nullptr;
+                        zend_string *attrKey = nullptr;
                         zval *val = nullptr;
-                        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARR(resolved), key, val) {
-                            if (key && val) {
+                        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARR(resolved), attrKey, val) {
+                            if (attrKey && val) {
                                 zval copy;
                                 ZVAL_COPY(&copy, val);
-                                zend_hash_update(Z_ARR_P(params[7].get()), key, &copy);
+                                zend_hash_update(Z_ARR_P(params[7].get()), attrKey, &copy);
                             }
                         }
                         ZEND_HASH_FOREACH_END();
