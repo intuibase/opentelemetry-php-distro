@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace OTelDistroTests\ComponentTests;
 
-use OpenTelemetry\API\Instrumentation\SpanAttribute;
-use OpenTelemetry\API\Instrumentation\WithSpan;
-use OpenTelemetry\API\Trace\SpanKind as OTelSpanKind;
 use OTelDistroTests\ComponentTests\Util\AppCodeHostParams;
 use OTelDistroTests\ComponentTests\Util\AppCodeRequestParams;
 use OTelDistroTests\ComponentTests\Util\AppCodeTarget;
@@ -235,50 +232,3 @@ final class WithSpanAttributeTest extends ComponentTestCaseBase
         );
     }
 }
-
-// ---------------------------------------------------------------------------
-// Service class — defined at file scope so it's autoloaded in spawned process
-// ---------------------------------------------------------------------------
-
-/**
- * Test subject: PHP class with #[WithSpan] / #[SpanAttribute] attributes.
- */
-final class WithSpanTestService
-{
-    #[SpanAttribute]
-    public string $tenantId = '';
-
-    #[WithSpan]
-    public function basicMethod(): string
-    {
-        return 'ok';
-    }
-
-    #[WithSpan('custom.operation', OTelSpanKind::KIND_CLIENT)]
-    public function customNameAndKind(): string
-    {
-        return 'ok';
-    }
-
-    #[WithSpan]
-    public function withParamAttrs(
-        #[SpanAttribute] string $userId,
-        string                  $secret,
-        #[SpanAttribute('request.operation')] string $operation,
-    ): string {
-        return "{$userId}/{$operation}";
-    }
-
-    #[WithSpan]
-    public function withPropertyAttrs(): string
-    {
-        return "tenant:{$this->tenantId}";
-    }
-
-    #[WithSpan]
-    public function throwingMethod(#[SpanAttribute] string $reason): void
-    {
-        throw new \RuntimeException("Deliberate: {$reason}");
-    }
-}
-
