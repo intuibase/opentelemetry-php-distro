@@ -167,6 +167,18 @@ final class AgentBackendComms
     }
 
     /**
+     * @return \Generator<int, Span>
+     */
+    public function findSpansByInstrumentationScope(string $scopeName): \Generator
+    {
+        foreach ($this->spans() as $span) {
+            if ($span->instrumentationScopeName === $scopeName) {
+                yield $span;
+            }
+        }
+    }
+
+    /**
      * @param non-empty-string   $attributeName
      * @phpstan-param AttributeValue $attributeValueToFind
      *
