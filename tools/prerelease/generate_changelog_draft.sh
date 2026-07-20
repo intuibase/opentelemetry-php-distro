@@ -80,14 +80,51 @@ fetch_pr_for_commit() {
     pr_response=$(curl -s -H "Accept: application/vnd.github+json" $auth_header \
                         "https://api.github.com/repos/open-telemetry/opentelemetry-php-distro/commits/$commit_hash/pulls")
 
-    echo "$pr_response" | jq -r '.[0] | if .html_url then "(PR [#\(.number)](\(.html_url)))" else "" end'
+    echo "$pr_response" | jq -r 'if type == "array" then .[0] | if .html_url then "(PR [#\(.number)](\(.html_url)))" else "" end else "" end'
+}
+
+generate_otel_packages_section() {
+    local repo_root
+    repo_root=$(git rev-parse --show-toplevel)
+
+    local lock_file="$repo_root/generated_composer_lock_files/prod_85.lock"
+    if [[ ! -f "$lock_file" ]]; then
+        echo "_Could not find $lock_file — OTel package versions unavailable._"
+        echo
+        return
+    fi
+
+    local packages=('open-telemetry/api' 'open-telemetry/context' 'open-telemetry/sdk')
+
+    local links=()
+    for pkg in "${packages[@]}"; do
+        local pkg_version source_url release_url
+        pkg_version=$(jq -r --arg name "$pkg" '.packages[] | select(.name == $name) | .version' "$lock_file")
+        source_url=$(jq -r --arg name "$pkg" '.packages[] | select(.name == $name) | .source.url' "$lock_file")
+        release_url="${source_url%.git}/releases/tag/${pkg_version}"
+        links+=("[${pkg} ${pkg_version}](${release_url})")
+    done
+
+    echo "### This release is based on the following OpenTelemetry PHP packages:"
+    echo
+    for link in "${links[@]}"; do
+        echo "- ${link}"
+    done
+    echo
 }
 
 generate_changelog() {
     local previous_tag="$1"
     local target_branch_or_tag="$2"
 
-    echo "## v[PUT VERSION TAG HERE]"
+    local repo_root version
+    repo_root=$(git rev-parse --show-toplevel)
+    version=$(grep -E '^version=' "$repo_root/project.properties" | cut -d= -f2)
+
+    echo "## ${version}"
+    echo
+    generate_otel_packages_section
+    echo "### What's changed"
     echo
 
     git log "${previous_tag}..${target_branch_or_tag}" --oneline | while read -r line; do
