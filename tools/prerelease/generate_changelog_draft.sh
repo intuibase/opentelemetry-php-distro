@@ -84,10 +84,10 @@ fetch_pr_for_commit() {
 }
 
 generate_otel_packages_section() {
-    local repo_root
-    repo_root=$(git rev-parse --show-toplevel)
+    local max_php_version
+    max_php_version=$(get_array_max_value ${_PROJECT_PROPERTIES_SUPPORTED_PHP_VERSIONS})
 
-    local lock_file="$repo_root/generated_composer_lock_files/prod_85.lock"
+    local lock_file="$REPO_ROOT/generated_composer_lock_files/prod_${max_php_version}.lock"
     if [[ ! -f "$lock_file" ]]; then
         echo "_Could not find $lock_file — OTel package versions unavailable._"
         echo
@@ -99,8 +99,12 @@ generate_otel_packages_section() {
     local links=()
     for pkg in "${packages[@]}"; do
         local pkg_version source_url release_url
-        pkg_version=$(jq -r --arg name "$pkg" '.packages[] | select(.name == $name) | .version' "$lock_file")
-        source_url=$(jq -r --arg name "$pkg" '.packages[] | select(.name == $name) | .source.url' "$lock_file")
+        pkg_version=$(jq -r --arg name "$pkg" 'first(.packages[] | select(.name==$name)) | .version // empty' "$lock_file")
+        source_url=$(jq -r --arg name "$pkg" 'first(.packages[] | select(.name==$name)) | .source.url // empty' "$lock_file")
+        if [[ -z "$pkg_version" || -z "$source_url" ]]; then
+            echo "Warning: package $pkg not found in $lock_file" >&2
+            continue
+        fi
         release_url="${source_url%.git}/releases/tag/${pkg_version}"
         links+=("[${pkg} ${pkg_version}](${release_url})")
     done
@@ -117,11 +121,12 @@ generate_changelog() {
     local previous_tag="$1"
     local target_branch_or_tag="$2"
 
-    local repo_root version
-    repo_root=$(git rev-parse --show-toplevel)
-    version=$(grep -E '^version=' "$repo_root/project.properties" | cut -d= -f2)
+    if [[ -z "$_PROJECT_PROPERTIES_VERSION" ]]; then
+        echo "Error: could not read version from project.properties" >&2
+        return 1
+    fi
 
-    echo "## ${version}"
+    echo "## ${_PROJECT_PROPERTIES_VERSION}"
     echo
     generate_otel_packages_section
     echo "### What's changed"
@@ -142,6 +147,10 @@ generate_changelog() {
         pr_link=$(fetch_pr_for_commit "$commit_hash")
 
         if [[ -n "$pr_link" ]]; then
+            pr_number=$(echo "$pr_link" | grep -oE '[0-9]+' | head -1)
+            commit_message_with_links=$(echo "$commit_message_with_links" | \
+                sed "s|(\[#${pr_number}\]([^)]*issues/${pr_number}))||g" | \
+                sed 's/  */ /g;s/ $//')
             commit_message_with_links="$commit_message_with_links $pr_link"
         fi
 
@@ -151,6 +160,12 @@ generate_changelog() {
 
 main() {
     parse_args "$@"
+
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+    source "$REPO_ROOT/tools/read_properties.sh"
+    source "$REPO_ROOT/tools/helpers/array_helpers.sh"
+    read_properties "$REPO_ROOT/project.properties" _PROJECT_PROPERTIES
+
     generate_changelog "$PREVIOUS_TAG" "$TARGET"
 }
 
